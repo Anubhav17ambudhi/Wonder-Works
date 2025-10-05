@@ -29,7 +29,7 @@ const complaintSchema = new mongoose.Schema(
 
     location_details: { type: String, required: true },
 
-    type: {
+    complaint_type: {
       type: String,
       enum: ["infrastructure", "service", "other"],
       default: "other",
@@ -38,8 +38,14 @@ const complaintSchema = new mongoose.Schema(
     photo_url: { type: String },
 
     updated_by_id: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+
+    resolved_at: {
+      type: Date
+    }
   },
-  { timestamps: true }
+  { 
+    timestamps: true 
+  }
 );
 
 // create a model
