@@ -1,8 +1,6 @@
-import express from 'express';
-import { config } from 'dotenv';
+import express from "express";
+import { config } from "dotenv";
 
 export const app = express();
 
-app.config({path: './.env'})
-
-
+config({ path: "./.env" });
