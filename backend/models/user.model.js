@@ -26,6 +26,8 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
     myComplaints: [{ type: mongoose.Schema.Types.ObjectId, ref: "Complaint" }],
+    resetPasswordToken: String,
+    resetPasswordExpire: Date,
   },
   { timestamps: true }
 );

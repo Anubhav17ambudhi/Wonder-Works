@@ -174,18 +174,15 @@ export const updatePassword = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHandler(400, "Please provide all fields"));
   }
 
-  const isPasswordMatched = await bcrypt.compare(
-    currentPassword,
-    user.password
-  );
+  const isPasswordMatched = user.comparePasswords(currentPassword);
+
   if (!isPasswordMatched) {
     return next(new ErrorHandler(400, "Current password is incorrect"));
   }
   if (newPassword.length < 8 || newPassword.length > 16) {
     return next(
       new ErrorHandler(
-        "Password must be at least 8 characters long and less than 16 characters",
-        400
+        400,"Password must be at least 8 characters long and less than 16 characters"
       )
     );
   }
