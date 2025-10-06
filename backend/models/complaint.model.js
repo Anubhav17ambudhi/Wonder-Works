@@ -13,7 +13,7 @@ const complaintSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["open", "in_progress", "resolved", "closed"],
+      enum: ["open", "in", "in_progress", "resolved"],
       default: "open",
     },
 
@@ -31,23 +31,33 @@ const complaintSchema = new mongoose.Schema(
 
     complaint_type: {
       type: String,
-      enum: ["infrastructure", "service", "other"],
-      default: "other",
+      enum: [
+        "Water Sanitation",
+        "Drainage Problem",
+        "Streetlight Maintenance",
+        "Garbage Not Collected",
+        "Road Repair",
+        "Stray Animals",
+        "Other",
+      ],
+      required: true,
     },
 
-    photo_url: { type: String },
+    photo_url: {
+      publicId: String,
+      url: String,
+    },
 
     updated_by_id: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 
     resolved_at: {
-      type: Date
-    }
+      type: Date,
+    },
   },
-  { 
-    timestamps: true 
+  {
+    timestamps: true,
   }
 );
 
 // create a model
-const Complaint = mongoose.model("Complaint", complaintSchema);
-export default Complaint;
+export const Complaint = mongoose.model("Complaint", complaintSchema);

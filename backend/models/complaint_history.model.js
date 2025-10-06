@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const complaintHistorySchema = new mongoose.model({
+const complaintHistorySchema = new mongoose.Schema({
   complaint_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Complaint'
@@ -18,6 +18,7 @@ const complaintHistorySchema = new mongoose.model({
 },
 {
   timestamps: true
-})
+}
+)
 
 export const ComplaintHistory = mongoose.model("ComplaintHistory", complaintHistorySchema);

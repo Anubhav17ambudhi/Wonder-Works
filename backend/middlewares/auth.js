@@ -50,8 +50,8 @@ export const isAuthorized = (...roles) => {
     if (!roles.includes(req.user.role)) {
       return next(
         new ErrorHandler(
-          `Role:with this role (${req.user.role}) is not allowed to access this resource`,
-          403
+          403,
+          `Role:with this role (${req.user.role}) is not allowed to access this resource`
         )
       );
     }

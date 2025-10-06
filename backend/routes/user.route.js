@@ -8,6 +8,7 @@ import {
   resetPassword,
   updatePassword,
 } from "../controllers/user.controller.js";
+
 import { isAuthenticated } from "../middlewares/auth.js";
 
 const router = express.Router();
