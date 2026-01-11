@@ -4,16 +4,17 @@ import { User } from "../models/user.model.js";
 import { Complaint } from "../models/complaint.model.js";
 import { ComplaintHistory } from "../models/complaint_history.model.js";
 import { v2 as cloudinary } from "cloudinary";
+import { complaintQueue } from "../queues/ComplainQueue.js";
 
-const priorityMap = {
-  "Water Sanitation": "high",
-  "Drainage Problem": "high",
-  "Streetlight Maintenance": "medium",
-  "Garbage Not Collected": "medium",
-  "Road Repair": "medium",
-  "Stray Animals": "low",
-  Other: "low",
-};
+// const priorityMap = { 
+//   "Water Sanitation": "high",
+//   "Drainage Problem": "high",
+//   "Streetlight Maintenance": "medium",
+//   "Garbage Not Collected": "medium",
+//   "Road Repair": "medium",
+//   "Stray Animals": "low",
+//   Other: "low",
+// };
 
 export const createComplaint = catchAsyncError(async (req, res, next) => {
   const { title, description, area, location_details, complaint_type } =
@@ -62,7 +63,7 @@ export const createComplaint = catchAsyncError(async (req, res, next) => {
   }
 
   const complaint = await Complaint.create({
-    userId : req.user._id,
+    userId: req.user._id,
     title,
     description,
     area,
@@ -75,6 +76,7 @@ export const createComplaint = catchAsyncError(async (req, res, next) => {
       url: cloudinaryResponse.secure_url,
     },
     created_by: req.user._id,
+    ai_priority_score: null, // Initially null, to be updated by AI worker
   });
 
   
@@ -89,6 +91,13 @@ export const createComplaint = catchAsyncError(async (req, res, next) => {
     comment: `Complaint titled "${title}" filed by ${req.user.name}`,
   });
 
+  if (complaint) {
+    // This sends the complaint ID to your background worker for processing.
+    await complaintQueue.add("analyzeComplaintPriority", {
+      complaintId: complaint._id,
+    });
+  }
+
   res.status(201).json({
     success: true,
     message: "Complaint registered successfully",
@@ -96,32 +105,32 @@ export const createComplaint = catchAsyncError(async (req, res, next) => {
   });
 });
 
-export const getAllComplaints = catchAsyncError(async (req, res, next) => {
-  const complaints = await Complaint.find().populate("userId", "name email");
-  res.status(200).json({
-    success: true,
-    complaints,
-  });
-});
+// export const getAllComplaints = catchAsyncError(async (req, res, next) => {
+//   const complaints = await Complaint.find().populate("userId", "name email");
+//   res.status(200).json({
+//     success: true,
+//     complaints,
+//   });
+// });
 
-export const getComplaintById = catchAsyncError(async (req, res, next) => {
-  const { id } = req.params;
-  const complaint = await Complaint.findById(id)
-    // .populate("userId", "name email")
-    .populate("assignedTo", "name email")
-    .populate("updated_by_id", "name email");
-  if (!complaint) {
-    return next(new ErrorHandler(404, "Complaint not found"));
-  }
-  const history = await ComplaintHistory.find({ complaint_id: id })
-    .populate("updated_by_id", "name email")
-    .sort({ createdAt: -1 });   
-  res.status(200).json({
-    success: true,
-    complaint,
-    history,
-  });
-});
+// export const getComplaintById = catchAsyncError(async (req, res, next) => {
+//   const { id } = req.params;
+//   const complaint = await Complaint.findById(id)
+//     // .populate("userId", "name email")
+//     .populate("assignedTo", "name email")
+//     .populate("updated_by_id", "name email");
+//   if (!complaint) {
+//     return next(new ErrorHandler(404, "Complaint not found"));
+//   }
+//   const history = await ComplaintHistory.find({ complaint_id: id })
+//     .populate("updated_by_id", "name email")
+//     .sort({ createdAt: -1 });   
+//   res.status(200).json({
+//     success: true,
+//     complaint,
+//     history,
+//   });
+// });
 
 // Updating a complaint's status (updateComplaintStatus)
 
