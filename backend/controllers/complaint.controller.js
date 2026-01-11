@@ -1,12 +1,12 @@
 import { catchAsyncError } from "../middlewares/catchAsyncErrors.js";
 import ErrorHandler from "../middlewares/error.js";
-import { User } from "../models/user.model.js";
+// import { User } from "../models/user.model.js";
 import { Complaint } from "../models/complaint.model.js";
-import { ComplaintHistory } from "../models/complaint_history.model.js";
+// import { ComplaintHistory } from "../models/complaint_history.model.js";
 import { v2 as cloudinary } from "cloudinary";
-import { complaintQueue } from "../queues/ComplainQueue.js";
+// import { complaintQueue } from "../queues/ComplainQueue.js";
 
-// const priorityMap = { 
+// const priorityMap = {
 //   "Water Sanitation": "high",
 //   "Drainage Problem": "high",
 //   "Streetlight Maintenance": "medium",
@@ -16,22 +16,28 @@ import { complaintQueue } from "../queues/ComplainQueue.js";
 //   Other: "low",
 // };
 
-export const createComplaint = catchAsyncError(async (req, res, next) => {
-  const { title, description, area, location_details, complaint_type } =
-    req.body;
+function generateComplaintId() {
+  const timestamp = Date.now().toString().slice(-6);
+  const random = Math.floor(100 + Math.random() * 900);
+  return `CMP-${timestamp}-${random}`;
+}
 
-  if (!title || !description || !area || !location_details || !complaint_type) {
+export const createComplaint = catchAsyncError(async (req, res, next) => {
+  const {
+    name,
+    email,
+    phone,
+    person_address,
+    area,
+    locality,
+    street,
+    location_details,
+    description,
+  } = req.body;
+
+  if (!name || !email || !area || !locality || !street || !description) {
     return next(new ErrorHandler(400, "Please provide all required fields"));
   }
-
-  const mayor = await User.findOne({ role: "mayor" });
-  if (!mayor) {
-    return next(new ErrorHandler(500, "No mayor found. Please contact admin."));
-  }
-
-  const assignedTo = mayor._id;
-
-  const priority = priorityMap[complaint_type] || "low";
 
   const { complaint_photo } = req.files;
   const allowedFileTypes = [
@@ -52,51 +58,44 @@ export const createComplaint = catchAsyncError(async (req, res, next) => {
     complaint_photo.tempFilePath,
     { folder: "Wonder_works" }
   );
-  console.log(cloudinaryResponse);
-  
+  // console.log(cloudinaryResponse);
+
   if (!cloudinaryResponse) {
     console.error(
       "Error uploading complaint photo to cloudinary:",
       cloudinaryResponse.error || "Unknown error"
     );
-    return next(new ErrorHandler(500, "Error uploading avatar to cloudinary"));
+    return next(
+      new ErrorHandler(500, "Error uploading complaint photo to cloudinary")
+    );
   }
 
+  //creating the logic for generating the unique complaint ID,type,Priority and the
+  //assignment to a supervisor also will be done here
+  const complaint_id = generateComplaintId();
+
   const complaint = await Complaint.create({
-    userId: req.user._id,
-    title,
-    description,
-    area,
-    location_details,
-    complaint_type,
-    priority,
-    assignedTo,
-    photo_url: {
+    person_details: {
+      name,
+      email,
+      phone,
+      street_address: person_address,
+    },
+    location: {
+      area,
+      locality,
+      street,
+      location_details,
+    },
+    photoUrl: {
       publicId: cloudinaryResponse.public_id,
       url: cloudinaryResponse.secure_url,
     },
-    created_by: req.user._id,
-    ai_priority_score: null, // Initially null, to be updated by AI worker
+    status: "OPEN",
+    description,
+    complaint_id
   });
-
-  
-
-  req.user.myComplaints.push(complaint._id);
-  await req.user.save();
-
-  await ComplaintHistory.create({
-    complaint_id: complaint._id,
-    updated_by_id: req.user._id,
-    action_taken: `Complaint Filed on ${new Date().toLocaleString()}`,
-    comment: `Complaint titled "${title}" filed by ${req.user.name}`,
-  });
-
-  if (complaint) {
-    // This sends the complaint ID to your background worker for processing.
-    await complaintQueue.add("analyzeComplaintPriority", {
-      complaintId: complaint._id,
-    });
-  }
+  complaint.save();
 
   res.status(201).json({
     success: true,
@@ -124,7 +123,7 @@ export const createComplaint = catchAsyncError(async (req, res, next) => {
 //   }
 //   const history = await ComplaintHistory.find({ complaint_id: id })
 //     .populate("updated_by_id", "name email")
-//     .sort({ createdAt: -1 });   
+//     .sort({ createdAt: -1 });
 //   res.status(200).json({
 //     success: true,
 //     complaint,
@@ -137,11 +136,10 @@ export const createComplaint = catchAsyncError(async (req, res, next) => {
 // export const assignComplaint = catchAsyncError(async (req, res, next) => {
 //   const { id } = req.params;
 
-//   const complaint = await Complaint.findById(id); 
+//   const complaint = await Complaint.findById(id);
 
 //   if(!complaint){
 //     return next(new ErrorHandler(404, "Complaint not found"));
 //   }
-
 
 // });

@@ -12,23 +12,33 @@ const complaintSchema = new mongoose.Schema(
       area: { type: String, required: true },
       locality: { type: String, required: true },
       street: { type: String, required: true },
-      location_details: { type: String, required: true },
+      location_details: { type: String, required: false },
     },
 
     description: { type: String, required: true },
-    
-    photo_url: {
+
+    photoUrl: {
       publicId: { type: String, required: true },
       url: { type: String, required: true },
     },
 
     complaint_id: { type: String, required: true, unique: true },
 
-    type_of_complaint: { type: String, required: false, default: "general"},
+    type_of_complaint: { type: String, required: false, default: "general" },
 
-    priority: {type: Number,enum: [1,2,3,4,5,6,7,8,9,10], default: 5},
-    
+    priority: {
+      type: Number,
+      enum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      default: 5,
+    },
+
     assinedTo: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+
+    status: {
+      type: String,
+      enum : ['OPEN','IN','PROGRESS','RESOLVED','ESCALATED'],
+      required: true,
+    }
   },
   {
     timestamps: true,
