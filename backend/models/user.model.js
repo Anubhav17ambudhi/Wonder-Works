@@ -10,24 +10,26 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true, select: false },
     role: {
       type: String,
-      enum: ["citizen", "mayor", "supervisor"],
-      default: "citizen",
+      enum: ["mayor", "supervisor"],
     },
-    address: { type: String, required: false },
-    phone: {
-      type: String,
-      validate: {
-        validator: function (v) {
-          return /^\+91\d{10}$/.test(v);
-        },
-        message: (props) => `${props.value} is not a valid phone number!`,
-      },
-      unique: true,
-      required: true,
-    },
+    // address: { type: String, required: false },
+    // phone: {
+    //   type: String,
+    //   validate: {
+    //     validator: function (v) {
+    //       return /^\+91\d{10}$/.test(v);
+    //     },
+    //     message: (props) => `${props.value} is not a valid phone number!`,
+    //   },
+    //   unique: true,
+    //   required: true,
+    // },
     myComplaints: [{ type: mongoose.Schema.Types.ObjectId, ref: "Complaint" }],
     resetPasswordToken: String,
     resetPasswordExpire: Date,
+
+    accessToken: { type: String },
+    refreshToken: { type: String },
   },
   { timestamps: true }
 );

@@ -5,10 +5,11 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 export const app = express();
 import { dbConnection } from "./db.js";
-// import userRouter from "./routes/user.route.js";
+import userRouter from "./routes/user.route.js";
 import expressFileUpload from "express-fileupload";
 import Complaint from "./routes/complaint.route.js";
 import { startDispatcher } from "./workers/aiDispatcher.js";
+import mayorRegRouter from "./routes/mayor.reg.route.js";
 
 config({ path: "./.env" });
 
@@ -31,11 +32,12 @@ app.use(
   })
 );
 
-// app.use("/api/v1/user", userRouter);
+app.use("/api/v1/user", userRouter);
 app.use("/api/v1/complaint", Complaint);
+app.use("/api/v1/mayor", mayorRegRouter);
 
 dbConnection();
 
-startDispatcher();
+// startDispatcher();
 
 app.use(errorMiddleware);

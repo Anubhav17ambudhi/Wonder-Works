@@ -18,8 +18,8 @@ const complaintSchema = new mongoose.Schema(
     description: { type: String, required: true },
 
     photoUrl: {
-      publicId: { type: String, required: true },
-      url: { type: String, required: true },
+      publicId: { type: String, required: false },
+      url: { type: String, required: false },
     },
 
     complaint_id: { type: String, required: true, unique: true },

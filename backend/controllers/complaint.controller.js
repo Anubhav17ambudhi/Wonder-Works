@@ -1,5 +1,7 @@
 import { catchAsyncError } from "../middlewares/catchAsyncErrors.js";
 import ErrorHandler from "../middlewares/error.js";
+import { sendEmail } from "../utils/sendEmail.js";
+import { generateComplainAcceptanceEmailTemplate } from "../utils/emailTemplate.js";
 // import { User } from "../models/user.model.js";
 import { Complaint } from "../models/complaint.model.js";
 // import { ComplaintHistory } from "../models/complaint_history.model.js";
@@ -39,35 +41,44 @@ export const createComplaint = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHandler(400, "Please provide all required fields"));
   }
 
-  const { complaint_photo } = req.files;
-  const allowedFileTypes = [
-    "image/png",
-    "image/jpg",
-    "image/jpeg",
-    "image/webp",
-  ];
-  if (!allowedFileTypes.includes(complaint_photo.mimetype)) {
-    return next(
-      new ErrorHandler(
-        400,
-        "Invalid file type. Only png, jpg, jpeg and webp are allowed"
-      )
-    );
-  }
-  const cloudinaryResponse = await cloudinary.uploader.upload(
-    complaint_photo.tempFilePath,
-    { folder: "Wonder_works" }
-  );
-  // console.log(cloudinaryResponse);
+  let photoData = null;
 
-  if (!cloudinaryResponse) {
-    console.error(
-      "Error uploading complaint photo to cloudinary:",
-      cloudinaryResponse.error || "Unknown error"
+  if(req.files && req.files.complaint_photo){
+    const { complaint_photo } = req.files;
+    const allowedFileTypes = [
+      "image/png",
+      "image/jpg",
+      "image/jpeg",
+      "image/webp",
+    ];
+    if (!allowedFileTypes.includes(complaint_photo.mimetype)) {
+      return next(
+        new ErrorHandler(
+          400,
+          "Invalid file type. Only png, jpg, jpeg and webp are allowed"
+        )
+      );
+    }
+    const cloudinaryResponse = await cloudinary.uploader.upload(
+      complaint_photo.tempFilePath,
+      { folder: "Wonder_works" }
     );
-    return next(
-      new ErrorHandler(500, "Error uploading complaint photo to cloudinary")
-    );
+    // console.log(cloudinaryResponse);
+
+    if (!cloudinaryResponse) {
+      console.error(
+        "Error uploading complaint photo to cloudinary:",
+        cloudinaryResponse.error || "Unknown error"
+      );
+      return next(
+        new ErrorHandler(500, "Error uploading complaint photo to cloudinary")
+      );
+    }
+
+    photoData = {
+      publicId: cloudinaryResponse.public_id,
+      url: cloudinaryResponse.secure_url,
+    }
   }
 
   //creating the logic for generating the unique complaint ID,type,Priority and the
@@ -87,15 +98,25 @@ export const createComplaint = catchAsyncError(async (req, res, next) => {
       street,
       location_details,
     },
-    photoUrl: {
-      publicId: cloudinaryResponse.public_id,
-      url: cloudinaryResponse.secure_url,
-    },
+    photoUrl: photoData,
     status: "OPEN",
     description,
     complaint_id
   });
-  complaint.save();
+  // await complaint.save({ validateBeforeSave: false });
+  // complaint.save();
+
+  const msg = generateComplainAcceptanceEmailTemplate(complaint.complaint_id);
+  
+  try {
+    await sendEmail({
+      email: complaint.person_details.email,
+      subject: "Acceptance of your complaint - Wonder Works",
+      msg,
+    });
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 500));
+  }
 
   res.status(201).json({
     success: true,

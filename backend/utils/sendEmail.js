@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 import ErrorHandler from "../middlewares/error.js";
 
-export const sendEmail = async ({ email, subject, message }) => {
+export const sendEmail = async ({ email, subject, msg }) => {
   if (!email || typeof email !== "string" || !email.includes("@")) {
     throw new ErrorHandler(400,"Invalid or missing recipient email address.");
   }
@@ -18,14 +18,17 @@ export const sendEmail = async ({ email, subject, message }) => {
         pass: process.env.SMTP_PASSWORD,
       },
     });
+    console.log("yaha tk chal rha hai");
+    
 
     const mailOptions = {
-      from: `"Schedulify - system mail" <${process.env.SMTP_MAIL}>`,
+      from: `"Wonder Works mail system" <${process.env.SMTP_MAIL}>`,
       to: email,
       subject: subject,
-      html: message,
-    };
-
+      html: msg,
+    }; 
+    // await transporter.verify();
+    // console.log("SMTP verified");
     const info = await transporter.sendMail(mailOptions);
     console.log("✅ Email sent successfully:", info.response);
   } catch (error) {

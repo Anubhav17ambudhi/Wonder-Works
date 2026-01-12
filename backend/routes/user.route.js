@@ -1,7 +1,6 @@
 import express from "express";
 import {
   login,
-  register,
   logout,
   getUser,
   forgotPassword,
@@ -13,7 +12,7 @@ import { isAuthenticated } from "../middlewares/auth.js";
 
 const router = express.Router();
 
-router.post("/register", register);
+// router.post("/register", register);
 // router.post("/verify-otp", verifyOTP); // Assuming verifyOTP is also handled by the register function for simplicity
 router.post("/login", login);
 router.get("/logout", isAuthenticated, logout);

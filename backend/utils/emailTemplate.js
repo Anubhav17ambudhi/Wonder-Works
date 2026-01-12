@@ -53,19 +53,102 @@ export function generateForgotPasswordEmailTemplate(resetPasswordUrl) {
       </head>
       <body>
         <div class="container">
-          <div class="header">Schedulify - the time table generator</div>
+          <div class="header">Wonder works - system generated mail</div>
           <div class="message">
             <p>Hello,</p>
             <p>You recently requested to reset your password. Click the button below to reset it:</p>
             <a href="${resetPasswordUrl}" class="button">Reset Password</a>
             <p>If you did not request a password reset, please ignore this email.</p>
-            <p>Thank you,<br/>Schedulify Team</p>
+            <p>Thank you,<br/>Wonder works team</p>
           </div>
           <div class="footer">
-            &copy; ${new Date().getFullYear()} Schedulify. All rights reserved.
+            &copy; ${new Date().getFullYear()} Wonder Works. All rights reserved.
           </div>
         </div>
       </body>
     </html>
   `;
+}
+
+export function generateComplainAcceptanceEmailTemplate(complaintId) {
+  return `
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Complaint Registered – Wonder Works</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        max-width: 600px;
+        margin: 40px auto;
+        background-color: #ffffff;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      }
+      .header {
+        text-align: center;
+        color: #4A90E2;
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 20px;
+      }
+      .message {
+        font-size: 16px;
+        color: #333333;
+        line-height: 1.6;
+      }
+      .footer {
+        text-align: center;
+        font-size: 12px;
+        color: #999999;
+        margin-top: 30px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">Complaint Successfully Registered</div>
+      <div class="message">
+        <p>Hello,</p>
+        <p>
+          Your complaint has been successfully registered with Wonder Works.
+          Our team is reviewing the issue and will take appropriate action.
+        </p>
+
+        <p>
+          Your <strong>Complaint ID</strong> is:
+          <strong style="color:#4A90E2;">${complaintId}</strong>
+        </p>
+
+        <p>
+          You can use this Complaint ID to track the status of your request on our portal.
+        </p>
+
+        <p>
+          If this complaint was not submitted by you, please contact our support team.
+        </p>
+
+        <p>
+          We apologize for any inconvenience caused and appreciate your patience.
+        </p>
+
+        <p>
+          Thank you,<br />
+          Wonder Works Team
+        </p>
+      </div>
+      <div class="footer">
+        &copy; ${new Date().getFullYear()} Wonder Works. All rights reserved.
+      </div>
+    </div>
+  </body>
+</html>
+`;
 }
