@@ -45,6 +45,8 @@ export const createComplaint = catchAsyncError(async (req, res, next) => {
 
   if(req.files && req.files.complaint_photo){
     const { complaint_photo } = req.files;
+    // console.log(req.files);
+    
     const allowedFileTypes = [
       "image/png",
       "image/jpg",

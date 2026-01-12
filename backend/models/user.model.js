@@ -12,18 +12,8 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["mayor", "supervisor"],
     },
-    // address: { type: String, required: false },
-    // phone: {
-    //   type: String,
-    //   validate: {
-    //     validator: function (v) {
-    //       return /^\+91\d{10}$/.test(v);
-    //     },
-    //     message: (props) => `${props.value} is not a valid phone number!`,
-    //   },
-    //   unique: true,
-    //   required: true,
-    // },
+    area: {type: mongoose.Schema.Types.ObjectId, ref: "Area"},
+    category: {type: String},
     myComplaints: [{ type: mongoose.Schema.Types.ObjectId, ref: "Complaint" }],
     resetPasswordToken: String,
     resetPasswordExpire: Date,

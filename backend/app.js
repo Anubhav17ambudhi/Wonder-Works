@@ -10,6 +10,8 @@ import expressFileUpload from "express-fileupload";
 import Complaint from "./routes/complaint.route.js";
 import { startDispatcher } from "./workers/aiDispatcher.js";
 import mayorRegRouter from "./routes/mayor.reg.route.js";
+import areaRouter from "./routes/area.route.js";
+import adminRouter from "./routes/admin.route.js"
 
 config({ path: "./.env" });
 
@@ -35,6 +37,8 @@ app.use(
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/complaint", Complaint);
 app.use("/api/v1/mayor", mayorRegRouter);
+app.use("/api/v1/area", areaRouter);
+app.use("/api/v1/admin", adminRouter);
 
 dbConnection();
 
