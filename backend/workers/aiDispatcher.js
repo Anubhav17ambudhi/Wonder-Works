@@ -93,19 +93,22 @@ async function classifyComplaint(description, photoUrl) {
 async function assignSupervisor(complaint, category) {
   let supervisor = await User.findOne({
     role: "supervisor",
-    department: category,
+    category,
   });
 
   if (!supervisor) {
     supervisor = await User.findOne({
       role: "supervisor",
-      department: "General",
+      department: "general",
     });
   }
 
   if (supervisor) {
     complaint.assignedSupervisor = supervisor._id;
     complaint.status = "OPEN";
+    supervisor.myComplaints.push(complaint._id);
+    await supervisor.save();
+    await complaint.save();
   } else {
     console.error("CRITICAL: No General Supervisor found!");
   }
@@ -135,9 +138,8 @@ export const startDispatcher = () => {
           complaint.priority = result.priority;
           // complaint.aiAnalysisLog = `Gemini: ${result.category} (Prio: ${result.priority})`;
 
-          // await assignSupervisor(complaint, result.category);
+          await assignSupervisor(complaint, result.category);
           console.log("now complaint is saved");
-          
           
           await complaint.save();
 

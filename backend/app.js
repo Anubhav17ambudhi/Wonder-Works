@@ -42,6 +42,6 @@ app.use("/api/v1/admin", adminRouter);
 
 dbConnection();
 
-// startDispatcher();
+startDispatcher();
 
 app.use(errorMiddleware);

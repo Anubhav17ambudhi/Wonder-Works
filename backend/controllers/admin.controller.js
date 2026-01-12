@@ -3,7 +3,7 @@ import { Area } from "../models/area.model.js";
 import fs from "fs";
 import csv from "csv-parser";
 import { User } from "../models/user.model.js";
-// import { sendEmail } from "../utils/sendEmail.js"; // Uncomment when ready
+import { sendEmail } from "../utils/sendEmail.js"; // Uncomment when ready
 
 // Fixed typo in chars and "License" category
 const generateRandomPassword = () => {
@@ -64,7 +64,7 @@ export const downloadAssignmentTemplate = async (req, res, next) => {
 export const uploadFilledAssignments = async (req, res, next) => {
   try {
     // 1. Validation: Ensure file exists and key is 'file'
-    console.log(req.files);
+    // console.log(req.files);
     
     if (!req.files || !req.files.assign_csv) {
       return res.status(400).json({
@@ -121,7 +121,7 @@ export const uploadFilledAssignments = async (req, res, next) => {
                   category,
                 });
 
-                // await sendEmail(email, "Welcome", `Your credentials... Password: ${password}`);
+                await sendEmail({email, subject: "Welcome", msg: `Your credentials... Password: ${password}`});
               } else {
                 // Update Existing Supervisor
                 // WARNING: This overwrites previous assignments.

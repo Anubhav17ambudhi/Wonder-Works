@@ -1,8 +1,11 @@
 import nodemailer from "nodemailer";
 import ErrorHandler from "../middlewares/error.js";
+import { log } from "console";
 
 export const sendEmail = async ({ email, subject, msg }) => {
   if (!email || typeof email !== "string" || !email.includes("@")) {
+    console.log("email.typeof:", typeof email);
+    
     throw new ErrorHandler(400,"Invalid or missing recipient email address.");
   }
 
