@@ -18,19 +18,22 @@ const generateRandomPassword = () => {
   return password;
 };
 
-
-
 const CATEGORIES = [
   "Street Light",
   "Public Toilet",
-  "Tax and License", // Fixed spelling
+  "Tax and Lisence",
   "Garbage",
   "Water Stagnation",
   "Storm Water Drains",
   "Floods",
   "Park and Playground",
   "Road and footpaths",
-  "General",
+  "Water Supply",
+  "Sewerage & Manholes",
+  "Air Quality",
+  "Noise Pollution",
+  "Stray Animals",
+  "general",
 ];
 
 export const downloadAssignmentTemplate = async (req, res, next) => {
@@ -64,11 +67,11 @@ export const downloadAssignmentTemplate = async (req, res, next) => {
 export const uploadFilledAssignments = async (req, res, next) => {
   try {
     // 1. Validation: Ensure file exists and key is 'file'
-    // console.log(req.files);
-    
+    console.log(req.files);
+
     if (!req.files || !req.files.assign_csv) {
       return res.status(400).json({
-        message: "Please upload the filled CSV file using the key 'file'",
+        message: "Please upload the filled CSV file using the key 'assign_csv'",
       });
     }
 
@@ -121,7 +124,11 @@ export const uploadFilledAssignments = async (req, res, next) => {
                   category,
                 });
 
-                await sendEmail({email, subject: "Welcome", msg: `Your credentials... Password: ${password}`});
+                await sendEmail({
+                  email,
+                  subject: "Welcome",
+                  msg: `Your credentials... Password: ${password}`,
+                });
               } else {
                 // Update Existing Supervisor
                 // WARNING: This overwrites previous assignments.

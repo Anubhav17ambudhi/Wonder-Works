@@ -3,7 +3,8 @@ import axios from "axios"; // Needed to fetch the image bytes
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import "dotenv/config";
 import {Complaint} from "../models/complaint.model.js";
-// import User from "../models/User.js";
+import {User} from "../models/user.model.js";
+import {sendEmail } from "../utils/sendEmail.js";
 
 // 1. Initialize Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -94,21 +95,33 @@ async function assignSupervisor(complaint, category) {
   let supervisor = await User.findOne({
     role: "supervisor",
     category,
+    area: complaint.location,
   });
 
   if (!supervisor) {
     supervisor = await User.findOne({
       role: "supervisor",
       department: "general",
+      area: complaint.location,
     });
   }
 
   if (supervisor) {
-    complaint.assignedSupervisor = supervisor._id;
-    complaint.status = "OPEN";
+    complaint.assinedTo = supervisor._id;
+    complaint.status = "IN";
     supervisor.myComplaints.push(complaint._id);
     await supervisor.save();
     await complaint.save();
+    await sendEmail({
+      email: supervisor.email,
+      subject: `New Complaint Assigned: ${complaint.complaint_id}`,
+      msg: `A new complaint has been assigned to you. Please check your dashboard.`,
+    });
+    await sendEmail({
+      email: complaint.person_details.email,
+      subject: `Complaint status track of complaint_id: ${complaint.complaint_id}`,
+      msg: `Your complaint has been assigned to our supervisor and is now being processed. You can track the status using your complaint ID.`,
+    });
   } else {
     console.error("CRITICAL: No General Supervisor found!");
   }

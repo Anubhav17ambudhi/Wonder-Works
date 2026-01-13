@@ -15,6 +15,8 @@ export const isAuthenticated = catchAsyncError(async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = await User.findById(decoded.id).select("-password");
+    console.log("Yaha authentication ho gya hai");
+    
     next();
   } catch (error) {
     // This will catch the specific error from jwt.verify

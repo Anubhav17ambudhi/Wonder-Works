@@ -9,11 +9,10 @@ const complaintSchema = new mongoose.Schema(
     },
 
     location: {
-      area: { type: String, required: true },
-      locality: { type: String, required: true },
-      street: { type: String, required: true },
-      location_details: { type: String, required: false },
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Area",
     },
+    locality: { type: String, required: false },
 
     description: { type: String, required: true },
 
@@ -36,9 +35,9 @@ const complaintSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum : ['OPEN','IN','PROGRESS','RESOLVED','ESCALATED'],
+      enum: ["OPEN", "IN", "PROGRESS", "RESOLVED", "ESCALATED"],
       required: true,
-    }
+    },
   },
   {
     timestamps: true,

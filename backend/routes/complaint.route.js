@@ -2,9 +2,10 @@ import express from "express";
 import { isAuthenticated, isAuthorized } from "../middlewares/auth.js";
 import {
   createComplaint,
-  // getAllComplaints,
+  getNewComplaints,
   // getComplaintById,
-  // assignComplaint,
+  assignmentofComplaintbySuperVisor,
+  complainResolvedBySuperVisor,
 } from "../controllers/complaint.controller.js";
 
 
@@ -12,8 +13,17 @@ import {
 const router = express.Router();
 
 router.post("/fileComplaint", createComplaint);
-// router.get("/getAllComplaints", isAuthenticated, getAllComplaints);
+router.get("/getNewComplaints", isAuthenticated, getNewComplaints);
 // router.get("/getComplaintById/:id", isAuthenticated, getComplaintById);
-// router.put("/assignComplaint/:id", isAuthenticated, isAuthorized("mayor"), assignComplaint);
+router.put(
+  "/assignComplaint/:id",
+  isAuthenticated,
+  assignmentofComplaintbySuperVisor
+);
+router.put(
+  "/complainResolvedBySuperVisor/:id",
+  isAuthenticated,
+  complainResolvedBySuperVisor
+);
 
 export default router;
