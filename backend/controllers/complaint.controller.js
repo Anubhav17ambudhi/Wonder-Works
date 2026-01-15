@@ -193,6 +193,23 @@ export const complainResolvedBySuperVisor = catchAsyncError(async (req, res, nex
   });
 });
 
+export const getEscalatedComplaints = catchAsyncError(async(req,res,next) => {
+  const user = req.user; 
+  if (!user) {
+    return ErrorHandler(400, "Mayor not found");
+  }
+
+  const complaints = await Complaint.find({status: "ESCALATED"}).sort({ priority: -1});
+  return res.status(200).json({
+    success: true,
+    message: complaints.length
+      ? "Escalated Complaints fetched successfully"
+      : "No escalated complaints currently",
+    complaints, // empty array if none
+    count: complaints.length,
+  });
+});
+
 export const escalatedComplainResolvedByMayor = catchAsyncError(async(req,res,next) =>{
   const { id } = req.params;
   const user = req.user;

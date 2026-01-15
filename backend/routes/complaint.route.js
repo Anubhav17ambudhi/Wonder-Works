@@ -3,7 +3,7 @@ import { isAuthenticated, isAuthorized } from "../middlewares/auth.js";
 import {
   createComplaint,
   getNewComplaints,
-  // getComplaintById,
+  getEscalatedComplaints,
   assignmentofComplaintbySuperVisor,
   complainResolvedBySuperVisor,
   escalatedComplainResolvedByMayor,
@@ -39,6 +39,12 @@ router.get(
   isAuthenticated,
   isAuthorized("mayor"),
   getComplaintByAreaandLocality
+);
+router.get(
+  "/getEscalatedComplaints",
+  isAuthenticated,
+  isAuthorized("mayor"),
+  getEscalatedComplaints
 );
 
 export default router;
