@@ -6,6 +6,8 @@ import {
   // getComplaintById,
   assignmentofComplaintbySuperVisor,
   complainResolvedBySuperVisor,
+  escalatedComplainResolvedByMayor,
+  getComplaintByAreaandLocality,
 } from "../controllers/complaint.controller.js";
 
 
@@ -24,6 +26,19 @@ router.put(
   "/complainResolvedBySuperVisor/:id",
   isAuthenticated,
   complainResolvedBySuperVisor
+);
+router.put(
+  "/escalatedComplainResolvedByMayor/:id",
+  isAuthenticated,
+  isAuthorized("mayor"),
+  escalatedComplainResolvedByMayor
+);
+
+router.get(
+  "/getComplaintByAreaandLocality",
+  isAuthenticated,
+  isAuthorized("mayor"),
+  getComplaintByAreaandLocality
 );
 
 export default router;

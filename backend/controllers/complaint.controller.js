@@ -2,12 +2,10 @@ import { catchAsyncError } from "../middlewares/catchAsyncErrors.js";
 import ErrorHandler from "../middlewares/error.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { generateComplainAcceptanceEmailTemplate } from "../utils/emailTemplate.js";
-// import { User } from "../models/user.model.js";
 import { Complaint } from "../models/complaint.model.js";
 import { Area } from "../models/area.model.js";
-// import { ComplaintHistory } from "../models/complaint_history.model.js";
 import { v2 as cloudinary } from "cloudinary";
-// import { complaintQueue } from "../queues/ComplainQueue.js";
+// import { User } from "../models/user.model.js";
 
 // const priorityMap = {
 //   "Water Sanitation": "high",
@@ -192,5 +190,60 @@ export const complainResolvedBySuperVisor = catchAsyncError(async (req, res, nex
     success: true,
     message: "Complaint Resolved successfully",
     complaint,
+  });
+});
+
+export const escalatedComplainResolvedByMayor = catchAsyncError(async(req,res,next) =>{
+  const { id } = req.params;
+  const user = req.user;
+
+  if (!user) {
+    return next(new ErrorHandler(400, "Mayor not found"));
+  }
+  const complaint = await Complaint.findOne({ complaint_id: id });
+  if (!complaint) {
+    return next(new ErrorHandler(404, "Complaint not found"));
+  }
+  complaint.status = "RESOLVED";
+  await complaint.save();
+  await sendEmail({
+    email: complaint.person_details.email,
+    subject: `Complaint status update for complaint_id: ${complaint.complaint_id}`,
+    msg: `We are pleased to inform you that your complaint has been resolved by the mayor. Thank you for bringing this to our attention and helping us improve our community services.`,
+  });
+  return res.status(200).json({
+    success: true,
+    message: "Complaint Resolved successfully by mayor",
+    complaint,
+  });
+});
+
+export const getComplaintByAreaandLocality = catchAsyncError(async(req,res,next) => {
+  const {zipCode, locality} = req.body;
+
+  if(!zipCode || !locality){
+    return next(new ErrorHandler(400, "Please Provide Area and locality"));
+  }
+  
+  const area = await Area.findOne({zipCode});
+  
+  if(!area){
+    return next(new ErrorHandler(400, "No area with this ZipCode"));
+  }
+  let complaints;
+  if(locality === "all"){
+    complaints = await Complaint.find({location: area._id,status: {$ne: "RESOLVED"}});
+  }
+  else{
+    complaints = await Complaint.find({
+      location: area._id,
+      locality: locality,
+      status: { $ne: "RESOLVED" },
+    });
+  }
+  return res.status(200).json({
+    success: true,
+    message: "Complaints are fetched successfully",
+    complaints,
   });
 });

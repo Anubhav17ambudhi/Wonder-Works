@@ -12,6 +12,7 @@ import { startDispatcher } from "./workers/aiDispatcher.js";
 import mayorRegRouter from "./routes/mayor.reg.route.js";
 import areaRouter from "./routes/area.route.js";
 import adminRouter from "./routes/admin.route.js"
+import { escalateComplaints } from "./workers/complainEscalation.js";
 
 config({ path: "./.env" });
 
@@ -43,5 +44,6 @@ app.use("/api/v1/admin", adminRouter);
 dbConnection();
 
 startDispatcher();
+escalateComplaints();
 
 app.use(errorMiddleware);
