@@ -6,6 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useDispatch, useSelector } from 'react-redux';
+import { setUser  } from '@/store/userSlice';
+import { log } from 'console';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -15,9 +18,31 @@ export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const dispatch = useDispatch();
+  let user = useSelector( state => state.userdetails  );
+  
+  console.log(user);
+  // const hadl = (e) => {
+  //   e.preventDefault() ;
+  //   dispatch(setUser({name:"kunal"})) ;
+  // }
+  // setUser({name:"kunal"}) ;
+  // hadl() ;
+  // user = useSelector( state => state.userdetails  );
+  // console.log(user);
+  
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    try {
+      
+      dispatch(setUser({name:"kunal"})) ;
+    } catch (error) {
+      
+    }
+    // user = useSelector ( state => state.userdetails ) ;
+    // console.log( user ) ;
 
     // Simulate login - in production, this would call an auth API
     setTimeout(() => {
