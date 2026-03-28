@@ -10,7 +10,7 @@ export const escalateComplaints = () => {
 
     try {
       const batch = await Complaint.find({
-        status: "IN",
+        status: { $in: ["IN", "OPEN"] },
         createdAt: { $lte: new Date(Date.now() - 120 * 60 * 60 * 1000) },
       });
 
