@@ -43,12 +43,13 @@ export const downloadAssignmentTemplate = async (req, res, next) => {
 
     areas.forEach((area) => {
       CATEGORIES.forEach((category) => {
+        const supervisor = User.findOne({ area: area._id, category });
         csvRows.push({
           "Area Name": area.name,
           "Zip Code": area.zipCode,
           Category: category,
-          "Supervisor Name": "",
-          "Supervisor Email": "",
+          "Supervisor Name": supervisor?.name || "",
+          "Supervisor Email": supervisor?.email || "",
         });
       });
     });
@@ -67,7 +68,7 @@ export const downloadAssignmentTemplate = async (req, res, next) => {
 export const uploadFilledAssignments = async (req, res, next) => {
   try {
     // 1. Validation: Ensure file exists and key is 'file'
-    console.log(req.files);
+    console.log("FILES:", req.files);
 
     if (!req.files || !req.files.assign_csv) {
       return res.status(400).json({
@@ -113,14 +114,14 @@ export const uploadFilledAssignments = async (req, res, next) => {
               let supervisor = await User.findOne({ email });
 
               if (!supervisor) {
-                // Create New Supervisor
                 const password = generateRandomPassword();
+
                 supervisor = await User.create({
                   name: name || "Supervisor",
                   email,
                   password,
-                  role: "supervisor", // Ensure this matches your User Model Enum
-                  area: area._id, // NOTE: This assumes 1 Supervisor = 1 Area
+                  role: "supervisor",
+                  area: area._id,
                   category,
                 });
 
@@ -129,14 +130,24 @@ export const uploadFilledAssignments = async (req, res, next) => {
                   subject: "Welcome",
                   msg: `Your credentials... Password: ${password}`,
                 });
-              } else {
-                // Update Existing Supervisor
-                // WARNING: This overwrites previous assignments.
-                // If a user is assigned 2 areas in CSV, they only keep the last one.
-                supervisor.area = area._id;
-                supervisor.category = category;
-                await supervisor.save();
+
+                successCount++;
+                continue;
               }
+
+              // 🚨 Existing supervisor case
+              if (supervisor.area) {
+                errors.push(
+                  `Supervisor ${email} already assigned to area ${supervisor.area}. Skipping.`
+                );
+                continue;
+              }
+
+              // ✅ Assign only if unassigned
+              supervisor.area = area._id;
+              supervisor.category = category;
+              await supervisor.save();
+
               successCount++;
             } catch (err) {
               errors.push(`Error processing ${email}: ${err.message}`);

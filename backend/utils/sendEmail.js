@@ -11,10 +11,11 @@ export const sendEmail = async ({ email, subject, msg }) => {
 
   try {
     console.log("📧 Preparing to send email to:", email);
-
+    // console.log("MAIL:", process.env.SMTP_MAIL);
+    // console.log("PASS:", process.env.SMTP_PASSWORD);
     const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT) || 587,
+      // host: process.env.SMTP_HOST,
+      // port: Number(process.env.SMTP_PORT) || 587,
       service: process.env.SMTP_SERVICE,
       auth: { 
         user: process.env.SMTP_MAIL,
@@ -30,8 +31,10 @@ export const sendEmail = async ({ email, subject, msg }) => {
       subject: subject,
       html: msg,
     }; 
-    // await transporter.verify();
-    // console.log("SMTP verified");
+    console.log("Working till mailOptions");
+    
+    await transporter.verify();
+    console.log("SMTP verified");
     const info = await transporter.sendMail(mailOptions);
     console.log("✅ Email sent successfully:", info.response);
   } catch (error) {
