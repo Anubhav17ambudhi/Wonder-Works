@@ -6,12 +6,16 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import axios from 'axios';
+import {BASE_URL} from "../../data";
+import { log } from 'console';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [user,setUser] = useState({});
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -19,23 +23,44 @@ export default function Login() {
     e.preventDefault();
     setIsLoading(true);
 
+    console.log("user") ;  
+    console.log(BASE_URL);  
+    
     // Simulate login - in production, this would call an auth API
-    setTimeout(() => {
-      if (email === 'mayor@city.gov' && password === 'admin123') {
-        toast({
-          title: 'Welcome back!',
-          description: 'Redirecting to your dashboard...',
-        });
-        navigate('/admin');
-      } else {
-        toast({
-          title: 'Invalid credentials',
-          description: 'Please check your email and password.',
-          variant: 'destructive',
-        });
-      }
-      setIsLoading(false);
-    }, 1000);
+    // setTimeout(() => {
+      //   if (email === 'mayor@city.gov' && password === 'admin123') {
+        //     toast({
+          //       title: 'Welcome back!',
+          //       description: 'Redirecting to your dashboard...',
+          //     });
+          //     navigate('/admin');
+          //   } else {
+            //     toast({
+              //       title: 'Invalid credentials',
+              //       description: 'Please check your email and password.',
+              //       variant: 'destructive',
+              //     });
+              //   }
+              //   setIsLoading(false);
+              // }, 1000);
+              try {
+                const response = await axios.post(`${BASE_URL}/user/login`, {
+                  email: "anudesign17@gmail.com",
+                  password: "123456789",
+                });
+                console.log(response);
+
+                if( response?.data.success  ) {
+                  setIsLoading(false);
+                  console.log("kunal") ;
+                  navigate("/admin");
+                } 
+                  
+
+              } catch (error) {
+                console.log(error);
+              }
+              setIsLoading(false);
   };
 
   return (

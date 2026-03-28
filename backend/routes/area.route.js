@@ -16,7 +16,7 @@ router.post(
   generateAreasWithAI
 );
 
-// Get All Areas (Available to both Mayor and Supervisor)
-router.get("/all", isAuthenticated, getAllAreas);
+// Get All Areas
+router.get("/all", getAllAreas);
 
 export default router;
