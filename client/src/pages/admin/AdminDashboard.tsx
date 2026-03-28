@@ -13,6 +13,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 
 export default function AdminDashboard() {
   const stats = {
@@ -22,6 +23,9 @@ export default function AdminDashboard() {
     resolved: sampleComplaints.filter((c) => c.status === 'resolved').length,
     escalated: sampleComplaints.filter((c) => c.status === 'escalated').length,
   };
+
+  const user = useSelector( state => state.userdetails ) ;
+  console.log("dashboard -> " , user) ;
 
   const recentComplaints = sampleComplaints.slice(0, 4);
   const escalatedComplaints = sampleComplaints.filter((c) => c.status === 'escalated');

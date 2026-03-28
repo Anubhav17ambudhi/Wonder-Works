@@ -6,8 +6,13 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+<<<<<<< HEAD
 import axios from 'axios';
 import {BASE_URL} from "../../data";
+=======
+import { useDispatch, useSelector } from 'react-redux';
+import { setUser  } from '@/store/userSlice';
+>>>>>>> 425c95683b2dc3dae482baedb7b6e6202f2e45e0
 import { log } from 'console';
 
 export default function Login() {
@@ -19,9 +24,31 @@ export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const dispatch = useDispatch();
+  let user = useSelector( state => state.userdetails  );
+  
+  console.log(user);
+  // const hadl = (e) => {
+  //   e.preventDefault() ;
+  //   dispatch(setUser({name:"kunal"})) ;
+  // }
+  // setUser({name:"kunal"}) ;
+  // hadl() ;
+  // user = useSelector( state => state.userdetails  );
+  // console.log(user);
+  
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    try {
+      
+      dispatch(setUser({name:"kunal"})) ;
+    } catch (error) {
+      
+    }
+    // user = useSelector ( state => state.userdetails ) ;
+    // console.log( user ) ;
 
     console.log("user") ;  
     console.log(BASE_URL);  
