@@ -59,23 +59,23 @@ export const createComplaint = catchAsyncError(async (req, res, next) => {
       return next(
         new ErrorHandler(
           400,
-          "Invalid file type. Only png, jpg, jpeg and webp are allowed"
-        )
+          "Invalid file type. Only png, jpg, jpeg and webp are allowed",
+        ),
       );
     }
     const cloudinaryResponse = await cloudinary.uploader.upload(
       complaint_photo.tempFilePath,
-      { folder: "Wonder_works" }
+      { folder: "Wonder_works" },
     );
     // console.log(cloudinaryResponse);
 
     if (!cloudinaryResponse) {
       console.error(
         "Error uploading complaint photo to cloudinary:",
-        cloudinaryResponse.error || "Unknown error"
+        cloudinaryResponse.error || "Unknown error",
       );
       return next(
-        new ErrorHandler(500, "Error uploading complaint photo to cloudinary")
+        new ErrorHandler(500, "Error uploading complaint photo to cloudinary"),
       );
     }
 
@@ -132,7 +132,7 @@ export const getNewComplaints = catchAsyncError(async (req, res, next) => {
   const complaints = await Complaint.find({
     assinedTo: user._id,
     status: "IN",
-  }).sort({ priority: -1});
+  }).sort({ priority: -1 });
   return res.status(200).json({
     success: true,
     message: complaints.length
@@ -143,124 +143,254 @@ export const getNewComplaints = catchAsyncError(async (req, res, next) => {
   });
 });
 
-export const assignmentofComplaintbySuperVisor = catchAsyncError(async (req, res, next) => {
-  const { id } = req.params;
-  const user = req.user;
+export const assignmentofComplaintbySuperVisor = catchAsyncError(
+  async (req, res, next) => {
+    const { id } = req.params;
+    const user = req.user;
 
-  if (!user) {
-    return next(new ErrorHandler(400, "Supervisor not found"));
-  }
-  const complaint = await Complaint.findOne({complaint_id: id});
-  if (!complaint) {
-    return next(new ErrorHandler(404, "Complaint not found"));
-  }
-  complaint.status = "PROGRESS";
-  await complaint.save();
-  await sendEmail({
-    email: complaint.person_details.email,
-    subject: `Complaint status update for complaint_id: ${complaint.complaint_id}`,
-    msg: `Your complaint is now being addressed by one our team worker. We appreciate your patience and will keep you updated on the progress.`,
-  });
-  return res.status(200).json({
-    success: true,
-    message: "Complaint assigned successfully",
-    complaint,
-  });
-});
-
-export const complainResolvedBySuperVisor = catchAsyncError(async (req, res, next) => {
-  const { id } = req.params;
-  const user = req.user;
-
-  if (!user) {
-    return next(new ErrorHandler(400, "Supervisor not found"));
-  }
-  const complaint = await Complaint.findOne({ complaint_id: id });
-  if (!complaint) {
-    return next(new ErrorHandler(404, "Complaint not found"));
-  }
-  complaint.status = "RESOLVED";
-  await complaint.save();
-  await sendEmail({
-    email: complaint.person_details.email,
-    subject: `Complaint status update for complaint_id: ${complaint.complaint_id}`,
-    msg: `We are pleased to inform you that your complaint has been resolved. Thank you for bringing this to our attention and helping us improve our community services.`,
-  });
-  return res.status(200).json({
-    success: true,
-    message: "Complaint Resolved successfully",
-    complaint,
-  });
-});
-
-export const getEscalatedComplaints = catchAsyncError(async(req,res,next) => {
-  const user = req.user; 
-  if (!user) {
-    return ErrorHandler(400, "Mayor not found");
-  }
-
-  const complaints = await Complaint.find({status: "ESCALATED"}).sort({ priority: -1});
-  return res.status(200).json({
-    success: true,
-    message: complaints.length
-      ? "Escalated Complaints fetched successfully"
-      : "No escalated complaints currently",
-    complaints, // empty array if none
-    count: complaints.length,
-  });
-});
-
-export const escalatedComplainResolvedByMayor = catchAsyncError(async(req,res,next) =>{
-  const { id } = req.params;
-  const user = req.user;
-
-  if (!user) {
-    return next(new ErrorHandler(400, "Mayor not found"));
-  }
-  const complaint = await Complaint.findOne({ complaint_id: id });
-  if (!complaint) {
-    return next(new ErrorHandler(404, "Complaint not found"));
-  }
-  complaint.status = "RESOLVED";
-  await complaint.save();
-  await sendEmail({
-    email: complaint.person_details.email,
-    subject: `Complaint status update for complaint_id: ${complaint.complaint_id}`,
-    msg: `We are pleased to inform you that your complaint has been resolved by the mayor. Thank you for bringing this to our attention and helping us improve our community services.`,
-  });
-  return res.status(200).json({
-    success: true,
-    message: "Complaint Resolved successfully by mayor",
-    complaint,
-  });
-});
-
-export const getComplaintByAreaandLocality = catchAsyncError(async(req,res,next) => {
-  const {zipCode, locality} = req.body;
-
-  if(!zipCode || !locality){
-    return next(new ErrorHandler(400, "Please Provide Area and locality"));
-  }
-  
-  const area = await Area.findOne({zipCode});
-  
-  if(!area){
-    return next(new ErrorHandler(400, "No area with this ZipCode"));
-  }
-  let complaints;
-  if(locality === "all"){
-    complaints = await Complaint.find({location: area._id,status: {$ne: "RESOLVED"}});
-  }
-  else{
-    complaints = await Complaint.find({
-      location: area._id,
-      locality: locality,
-      status: { $ne: "RESOLVED" },
+    if (!user) {
+      return next(new ErrorHandler(400, "Supervisor not found"));
+    }
+    const complaint = await Complaint.findOne({ complaint_id: id });
+    if (!complaint) {
+      return next(new ErrorHandler(404, "Complaint not found"));
+    }
+    complaint.status = "PROGRESS";
+    await complaint.save();
+    await sendEmail({
+      email: complaint.person_details.email,
+      subject: `Complaint status update for complaint_id: ${complaint.complaint_id}`,
+      msg: `Your complaint is now being addressed by one our team worker. We appreciate your patience and will keep you updated on the progress.`,
     });
-  }
+    return res.status(200).json({
+      success: true,
+      message: "Complaint assigned successfully",
+      complaint,
+    });
+  },
+);
+
+export const complainResolvedBySuperVisor = catchAsyncError(
+  async (req, res, next) => {
+    const { id } = req.params;
+    const user = req.user;
+
+    if (!user) {
+      return next(new ErrorHandler(400, "Supervisor not found"));
+    }
+    const complaint = await Complaint.findOne({ complaint_id: id });
+    if (!complaint) {
+      return next(new ErrorHandler(404, "Complaint not found"));
+    }
+    complaint.status = "RESOLVED";
+    await complaint.save();
+    await sendEmail({
+      email: complaint.person_details.email,
+      subject: `Complaint status update for complaint_id: ${complaint.complaint_id}`,
+      msg: `We are pleased to inform you that your complaint has been resolved. Thank you for bringing this to our attention and helping us improve our community services.`,
+    });
+    return res.status(200).json({
+      success: true,
+      message: "Complaint Resolved successfully",
+      complaint,
+    });
+  },
+);
+
+export const getEscalatedComplaints = catchAsyncError(
+  async (req, res, next) => {
+    const user = req.user;
+    if (!user) {
+      return ErrorHandler(400, "Mayor not found");
+    }
+
+    const complaints = await Complaint.find({ status: "ESCALATED" }).sort({
+      priority: -1,
+    });
+    return res.status(200).json({
+      success: true,
+      message: complaints.length
+        ? "Escalated Complaints fetched successfully"
+        : "No escalated complaints currently",
+      complaints, // empty array if none
+      count: complaints.length,
+    });
+  },
+);
+
+export const escalatedComplainResolvedByMayor = catchAsyncError(
+  async (req, res, next) => {
+    const { id } = req.params;
+    const user = req.user;
+
+    if (!user) {
+      return next(new ErrorHandler(400, "Mayor not found"));
+    }
+    const complaint = await Complaint.findOne({ complaint_id: id });
+    if (!complaint) {
+      return next(new ErrorHandler(404, "Complaint not found"));
+    }
+    complaint.status = "RESOLVED";
+    await complaint.save();
+    await sendEmail({
+      email: complaint.person_details.email,
+      subject: `Complaint status update for complaint_id: ${complaint.complaint_id}`,
+      msg: `We are pleased to inform you that your complaint has been resolved by the mayor. Thank you for bringing this to our attention and helping us improve our community services.`,
+    });
+    return res.status(200).json({
+      success: true,
+      message: "Complaint Resolved successfully by mayor",
+      complaint,
+    });
+  },
+);
+
+export const getComplaintByAreaandLocality = catchAsyncError(
+  async (req, res, next) => {
+    const { zipCode, locality } = req.body;
+
+    if (!zipCode || !locality) {
+      return next(new ErrorHandler(400, "Please Provide Area and locality"));
+    }
+
+    const area = await Area.findOne({ zipCode });
+
+    if (!area) {
+      return next(new ErrorHandler(400, "No area with this ZipCode"));
+    }
+    let complaints;
+    if (locality === "all") {
+      complaints = await Complaint.find({
+        location: area._id,
+        status: { $ne: "RESOLVED" },
+      });
+    } else {
+      complaints = await Complaint.find({
+        location: area._id,
+        locality: locality,
+        status: { $ne: "RESOLVED" },
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: "Complaints are fetched successfully",
+      complaints,
+    });
+  },
+);
+
+export const allAreawiseComplaints = catchAsyncError(async (req, res, next) => {
+  const complaintsCount = await Complaint.aggregate([
+    {
+      $match: {
+        status: { $ne: "RESOLVED" }, // ✅ correct enum
+      },
+    },
+    {
+      $group: {
+        _id: "$location", // group by Area ObjectId
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $lookup: {
+        from: "areas", // collection name (lowercase plural)
+        localField: "_id",
+        foreignField: "_id",
+        as: "area",
+      },
+    },
+    {
+      $unwind: "$area",
+    },
+    {
+      $project: {
+        _id: 0,
+        areaId: "$area._id",
+        areaName: "$area.name",
+        zipCode: "$area.zipCode",
+        count: 1,
+      },
+    },
+    {
+      $sort: { count: -1 }, // 🔥 most problematic areas first
+    },
+  ]);
+
   return res.status(200).json({
     success: true,
-    message: "Complaints are fetched successfully",
-    complaints,
+    message: "Area-wise complaint count fetched successfully",
+    complaintsCount,
   });
 });
+
+export const allCategoryWiseComplaints = catchAsyncError(
+  async (req, res, next) => {
+    const complaintsCount = await Complaint.aggregate([
+      {
+        $match: {
+          status: { $ne: "RESOLVED" }, // ✅ correct filter
+        },
+      },
+      {
+        $group: {
+          _id: "$type_of_complaint", // ✅ correct field
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          category: "$_id",
+          count: 1,
+        },
+      },
+      {
+        $sort: { count: -1 },
+      },
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      message: "Category-wise complaint count fetched successfully",
+      complaintsCount,
+    });
+  },
+);
+
+export const categoryWiseComplaintsByArea = catchAsyncError(
+  async (req, res, next) => {
+    const { areaId } = req.params;
+
+    const complaintsCount = await Complaint.aggregate([
+      {
+        $match: {
+          location: new mongoose.Types.ObjectId(areaId), // ✅ filter by area
+          status: { $ne: "RESOLVED" }, // ✅ exclude resolved
+        },
+      },
+      {
+        $group: {
+          _id: "$type_of_complaint", // ✅ group by category
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          category: "$_id",
+          count: 1,
+        },
+      },
+      {
+        $sort: { count: -1 },
+      },
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      message: "Category-wise complaints for area fetched successfully",
+      complaintsCount,
+    });
+  },
+);

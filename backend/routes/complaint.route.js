@@ -8,6 +8,9 @@ import {
   complainResolvedBySuperVisor,
   escalatedComplainResolvedByMayor,
   getComplaintByAreaandLocality,
+  allAreawiseComplaints,
+  allCategoryWiseComplaints,
+  categoryWiseComplaintsByArea,
 } from "../controllers/complaint.controller.js";
 
 
@@ -39,6 +42,24 @@ router.get(
   isAuthenticated,
   isAuthorized("mayor"),
   getComplaintByAreaandLocality
+);
+router.get(
+  "/allAreawiseComplaints",
+  isAuthenticated,
+  isAuthorized("mayor"),
+  allAreawiseComplaints,
+);
+router.get(
+  "/allCategoryWiseComplaints",
+  isAuthenticated,
+  isAuthorized("mayor"),
+  allCategoryWiseComplaints,
+);
+router.get(
+  "/categoryWiseComplaintsByArea",
+  isAuthenticated,
+  isAuthorized("mayor"),
+  categoryWiseComplaintsByArea,
 );
 router.get(
   "/getEscalatedComplaints",
