@@ -5,6 +5,7 @@ import { generateComplainAcceptanceEmailTemplate } from "../utils/emailTemplate.
 import { Complaint } from "../models/complaint.model.js";
 import { Area } from "../models/area.model.js";
 import { v2 as cloudinary } from "cloudinary";
+import mongoose from "mongoose";
 // import { User } from "../models/user.model.js";
 
 // const priorityMap = {
@@ -439,3 +440,17 @@ export const getComplaintStatusById = catchAsyncError(
     });
   },
 );
+
+export const getComplaintStats = catchAsyncError(async (req, res, next) => {
+  const [total, resolved, inProgress, escalated] = await Promise.all([
+    Complaint.countDocuments({}),
+    Complaint.countDocuments({ status: "RESOLVED" }),
+    Complaint.countDocuments({ status: { $in: ["OPEN", "IN", "PROGRESS"] } }),
+    Complaint.countDocuments({ status: "ESCALATED" }),
+  ]);
+
+  return res.status(200).json({
+    success: true,
+    stats: { total, resolved, inProgress, escalated },
+  });
+});

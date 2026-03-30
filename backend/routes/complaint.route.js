@@ -12,6 +12,7 @@ import {
   allCategoryWiseComplaints,
   categoryWiseComplaintsByArea,
   getComplaintStatusById,
+  getComplaintStats,
 } from "../controllers/complaint.controller.js";
 
 
@@ -31,6 +32,7 @@ router.put(
   isAuthenticated,
   complainResolvedBySuperVisor
 );
+router.get("/stats", isAuthenticated, isAuthorized("mayor"), getComplaintStats);
 router.put(
   "/escalatedComplainResolvedByMayor/:id",
   isAuthenticated,
@@ -57,7 +59,7 @@ router.get(
   allCategoryWiseComplaints,
 );
 router.get(
-  "/categoryWiseComplaintsByArea",
+  "/categoryWiseComplaintsByArea/:areaId",
   isAuthenticated,
   isAuthorized("mayor"),
   categoryWiseComplaintsByArea,
