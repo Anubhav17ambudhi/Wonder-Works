@@ -97,10 +97,12 @@ export const createComplaint = catchAsyncError(async (req, res, next) => {
       street_address: person_address,
     },
     location: existingArea._id,
+    locality,
     photoUrl: photoData,
     status: "OPEN",
     description,
     complaint_id,
+    type_of_complaint: req.body.type_of_complaint || "general",
   });
   // await complaint.save({ validateBeforeSave: false });
   // complaint.save();
