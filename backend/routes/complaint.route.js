@@ -11,6 +11,7 @@ import {
   allAreawiseComplaints,
   allCategoryWiseComplaints,
   categoryWiseComplaintsByArea,
+  getComplaintStatusById,
 } from "../controllers/complaint.controller.js";
 
 
@@ -19,7 +20,7 @@ const router = express.Router();
 
 router.post("/fileComplaint", createComplaint);
 router.get("/getNewComplaints", isAuthenticated, getNewComplaints);
-// router.get("/getComplaintById/:id", isAuthenticated, getComplaintById);
+router.get("/track/:id", getComplaintStatusById);
 router.put(
   "/assignComplaint/:id",
   isAuthenticated,

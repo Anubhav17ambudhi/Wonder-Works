@@ -394,3 +394,46 @@ export const categoryWiseComplaintsByArea = catchAsyncError(
     });
   },
 );
+
+export const getComplaintStatusById = catchAsyncError(
+  async (req, res, next) => {
+    const { id } = req.params;
+
+    if (!id) {
+      return next(new ErrorHandler(400, "Please provide a tracking ID"));
+    }
+
+    const complaint = await Complaint.findOne({ complaint_id: id })
+      .populate("assinedTo", "name email")
+      .populate("location", "name zipCode");
+
+    if (!complaint) {
+      return next(new ErrorHandler(404, "Complaint not found"));
+    }
+
+    return res.status(200).json({
+      success: true,
+      complaint: {
+        complaint_id: complaint.complaint_id,
+        status: complaint.status,
+        description: complaint.description,
+        locality: complaint.locality,
+        type_of_complaint: complaint.type_of_complaint,
+        createdAt: complaint.createdAt,
+        priority: complaint.priority,
+        area: complaint.location
+          ? {
+              name: complaint.location.name,
+              zipCode: complaint.location.zipCode,
+            }
+          : null,
+        assignedSupervisor: complaint.assinedTo
+          ? {
+              name: complaint.assinedTo.name,
+              email: complaint.assinedTo.email,
+            }
+          : null,
+      },
+    });
+  },
+);
