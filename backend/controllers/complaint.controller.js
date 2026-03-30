@@ -131,7 +131,7 @@ export const getNewComplaints = catchAsyncError(async (req, res, next) => {
   }
   const complaints = await Complaint.find({
     assinedTo: user._id,
-    status: "IN",
+    status: { $in: ["IN", "PROGRESS", "RESOLVED"] },
   }).sort({ priority: -1 });
   return res.status(200).json({
     success: true,
