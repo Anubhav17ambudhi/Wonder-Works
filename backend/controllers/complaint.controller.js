@@ -102,7 +102,7 @@ export const createComplaint = catchAsyncError(async (req, res, next) => {
     status: "OPEN",
     description,
     complaint_id,
-    type_of_complaint: req.body.type_of_complaint || "general",
+    type_of_complaint: "general",
   });
   // await complaint.save({ validateBeforeSave: false });
   // complaint.save();
