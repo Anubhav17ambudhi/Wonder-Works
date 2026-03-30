@@ -41,9 +41,13 @@ export const downloadAssignmentTemplate = async (req, res, next) => {
     const areas = await Area.find({}, "name zipCode");
     const csvRows = [];
 
-    areas.forEach((area) => {
-      CATEGORIES.forEach((category) => {
-        const supervisor = User.findOne({ area: area._id, category });
+    for (const area of areas) {
+      for (const category of CATEGORIES) {
+        const supervisor = await User.findOne({
+          area: area._id,
+          category,
+        });
+
         csvRows.push({
           "Area Name": area.name,
           "Zip Code": area.zipCode,
@@ -51,15 +55,19 @@ export const downloadAssignmentTemplate = async (req, res, next) => {
           "Supervisor Name": supervisor?.name || "",
           "Supervisor Email": supervisor?.email || "",
         });
-      });
-    });
+      }
+    }
 
     const parser = new Parser();
     const csvData = parser.parse(csvRows);
 
-    res.header("Content-Type", "text/csv");
-    res.attachment("supervisor_assignment_template.csv");
-    return res.send(csvData);
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=supervisor_assignment_template.csv",
+    );
+
+    return res.status(200).send(csvData);
   } catch (error) {
     next(error);
   }
