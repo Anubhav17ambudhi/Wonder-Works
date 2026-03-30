@@ -1,102 +1,56 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, Eye, EyeOff, ArrowLeft } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-<<<<<<< HEAD
-import axios from 'axios';
-import {BASE_URL} from "../../data";
-=======
-import { useDispatch, useSelector } from 'react-redux';
-import { setUser  } from '@/store/userSlice';
->>>>>>> 425c95683b2dc3dae482baedb7b6e6202f2e45e0
-import { log } from 'console';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Building2, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [user,setUser] = useState({});
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const dispatch = useDispatch();
-  let user = useSelector( state => state.userdetails  );
-  
-  console.log(user);
-  // const hadl = (e) => {
-  //   e.preventDefault() ;
-  //   dispatch(setUser({name:"kunal"})) ;
-  // }
-  // setUser({name:"kunal"}) ;
-  // hadl() ;
-  // user = useSelector( state => state.userdetails  );
-  // console.log(user);
-  
-  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    try {
-      
-      dispatch(setUser({name:"kunal"})) ;
-    } catch (error) {
-      
-    }
-    // user = useSelector ( state => state.userdetails ) ;
-    // console.log( user ) ;
 
-    console.log("user") ;  
-    console.log(BASE_URL);  
-    
     // Simulate login - in production, this would call an auth API
-    // setTimeout(() => {
-      //   if (email === 'mayor@city.gov' && password === 'admin123') {
-        //     toast({
-          //       title: 'Welcome back!',
-          //       description: 'Redirecting to your dashboard...',
-          //     });
-          //     navigate('/admin');
-          //   } else {
-            //     toast({
-              //       title: 'Invalid credentials',
-              //       description: 'Please check your email and password.',
-              //       variant: 'destructive',
-              //     });
-              //   }
-              //   setIsLoading(false);
-              // }, 1000);
-              try {
-                const response = await axios.post(`${BASE_URL}/user/login`, {
-                  email: "anudesign17@gmail.com",
-                  password: "123456789",
-                });
-                console.log(response);
-
-                if( response?.data.success  ) {
-                  setIsLoading(false);
-                  console.log("kunal") ;
-                  navigate("/admin");
-                } 
-                  
-
-              } catch (error) {
-                console.log(error);
-              }
-              setIsLoading(false);
+    setTimeout(() => {
+      if (email === "mayor@city.gov" && password === "admin123") {
+        toast({
+          title: "Welcome back!",
+          description: "Redirecting to your dashboard...",
+        });
+        navigate("/admin");
+      } else {
+        toast({
+          title: "Invalid credentials",
+          description: "Please check your email and password.",
+          variant: "destructive",
+        });
+      }
+      setIsLoading(false);
+    }, 1000);
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="absolute inset-0 gradient-hero opacity-5" />
-      
+
       <div className="w-full max-w-md relative z-10">
-        <Link 
-          to="/" 
+        <Link
+          to="/"
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-8 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -127,12 +81,12 @@ export default function Login() {
                   className="h-11"
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
-                  <Link 
-                    to="/forgot-password" 
+                  <Link
+                    to="/forgot-password"
                     className="text-sm text-primary hover:underline"
                   >
                     Forgot password?
@@ -141,7 +95,7 @@ export default function Login() {
                 <div className="relative">
                   <Input
                     id="password"
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -153,19 +107,28 @@ export default function Login() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
                   </button>
                 </div>
               </div>
 
-              <Button type="submit" className="w-full h-11" disabled={isLoading}>
-                {isLoading ? 'Signing in...' : 'Sign In'}
+              <Button
+                type="submit"
+                className="w-full h-11"
+                disabled={isLoading}
+              >
+                {isLoading ? "Signing in..." : "Sign In"}
               </Button>
             </form>
 
             <div className="mt-6 p-4 bg-muted rounded-lg">
               <p className="text-xs text-muted-foreground text-center">
-                <strong>Demo credentials:</strong><br />
+                <strong>Demo credentials:</strong>
+                <br />
                 Email: mayor@city.gov | Password: admin123
               </p>
             </div>
