@@ -1,57 +1,42 @@
 import mongoose from "mongoose";
 const complaintSchema = new mongoose.Schema(
   {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
+    person_details: {
+      name: { type: String, required: true },
+      email: { type: String, required: true },
+      phone: { type: String, required: false },
+      street_address: { type: String, required: false },
     },
 
-    title: { type: String, required: true },
+    location: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Area",
+    },
+    locality: { type: String, required: false },
 
     description: { type: String, required: true },
 
-    status: {
-      type: String,
-      enum: ["open", "in", "in_progress", "resolved"],
-      default: "open",
+    photoUrl: {
+      publicId: { type: String, required: false },
+      url: { type: String, required: false },
     },
+
+    complaint_id: { type: String, required: true, unique: true },
+
+    type_of_complaint: { type: String, required: false, default: "general" },
 
     priority: {
-      type: String,
-      enum: ["low", "medium", "high"],
-      default: "medium",
+      type: Number,
+      enum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      default: 5,
     },
 
-    assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    assinedTo: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 
-    area: { type: String, required: true },
-
-    location_details: { type: String, required: true },
-
-    complaint_type: {
+    status: {
       type: String,
-      enum: [
-        "Water Sanitation",
-        "Drainage Problem",
-        "Streetlight Maintenance",
-        "Garbage Not Collected",
-        "Road Repair",
-        "Stray Animals",
-        "Other",
-      ],
+      enum: ["OPEN", "IN", "PROGRESS", "RESOLVED", "ESCALATED"],
       required: true,
-    },
-
-    photo_url: {
-      publicId: String,
-      url: String,
-    },
-
-    updated_by_id: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-
-    resolved_at: {
-      type: Date,
     },
   },
   {

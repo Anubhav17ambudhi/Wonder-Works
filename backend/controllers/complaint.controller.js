@@ -1,93 +1,124 @@
 import { catchAsyncError } from "../middlewares/catchAsyncErrors.js";
 import ErrorHandler from "../middlewares/error.js";
-import { User } from "../models/user.model.js";
+import { sendEmail } from "../utils/sendEmail.js";
+import { generateComplainAcceptanceEmailTemplate } from "../utils/emailTemplate.js";
 import { Complaint } from "../models/complaint.model.js";
-import { ComplaintHistory } from "../models/complaint_history.model.js";
+import { Area } from "../models/area.model.js";
 import { v2 as cloudinary } from "cloudinary";
+import mongoose from "mongoose";
+// import { User } from "../models/user.model.js";
 
-const priorityMap = {
-  "Water Sanitation": "high",
-  "Drainage Problem": "high",
-  "Streetlight Maintenance": "medium",
-  "Garbage Not Collected": "medium",
-  "Road Repair": "medium",
-  "Stray Animals": "low",
-  Other: "low",
-};
+// const priorityMap = {
+//   "Water Sanitation": "high",
+//   "Drainage Problem": "high",
+//   "Streetlight Maintenance": "medium",
+//   "Garbage Not Collected": "medium",
+//   "Road Repair": "medium",
+//   "Stray Animals": "low",
+//   Other: "low",
+// };
+
+function generateComplaintId() {
+  const timestamp = Date.now().toString().slice(-6);
+  const random = Math.floor(100 + Math.random() * 900);
+  return `CMP-${timestamp}-${random}`;
+}
 
 export const createComplaint = catchAsyncError(async (req, res, next) => {
-  const { title, description, area, location_details, complaint_type } =
-    req.body;
+  const {
+    name,
+    email,
+    phone,
+    person_address,
+    area,
+    locality,
+    zipCode,
+    description,
+  } = req.body;
 
-  if (!title || !description || !area || !location_details || !complaint_type) {
+  if (!name || !email || !area || !locality || !description || !zipCode) {
     return next(new ErrorHandler(400, "Please provide all required fields"));
   }
-
-  const mayor = await User.findOne({ role: "mayor" });
-  if (!mayor) {
-    return next(new ErrorHandler(500, "No mayor found. Please contact admin."));
+  const existingArea = await Area.findOne({ zipCode });
+  if (!existingArea) {
+    return next(new ErrorHandler(400, "The specified area does not exist"));
   }
 
-  const assignedTo = mayor._id;
+  let photoData = null;
 
-  const priority = priorityMap[complaint_type] || "low";
+  if (req.files && req.files.complaint_photo) {
+    const { complaint_photo } = req.files;
+    // console.log(req.files);
 
-  const { complaint_photo } = req.files;
-  const allowedFileTypes = [
-    "image/png",
-    "image/jpg",
-    "image/jpeg",
-    "image/webp",
-  ];
-  if (!allowedFileTypes.includes(complaint_photo.mimetype)) {
-    return next(
-      new ErrorHandler(
-        400,
-        "Invalid file type. Only png, jpg, jpeg and webp are allowed"
-      )
+    const allowedFileTypes = [
+      "image/png",
+      "image/jpg",
+      "image/jpeg",
+      "image/webp",
+    ];
+    if (!allowedFileTypes.includes(complaint_photo.mimetype)) {
+      return next(
+        new ErrorHandler(
+          400,
+          "Invalid file type. Only png, jpg, jpeg and webp are allowed",
+        ),
+      );
+    }
+    const cloudinaryResponse = await cloudinary.uploader.upload(
+      complaint_photo.tempFilePath,
+      { folder: "Wonder_works" },
     );
-  }
-  const cloudinaryResponse = await cloudinary.uploader.upload(
-    complaint_photo.tempFilePath,
-    { folder: "Wonder_works" }
-  );
-  console.log(cloudinaryResponse);
-  
-  if (!cloudinaryResponse) {
-    console.error(
-      "Error uploading complaint photo to cloudinary:",
-      cloudinaryResponse.error || "Unknown error"
-    );
-    return next(new ErrorHandler(500, "Error uploading avatar to cloudinary"));
-  }
+    // console.log(cloudinaryResponse);
 
-  const complaint = await Complaint.create({
-    userId : req.user._id,
-    title,
-    description,
-    area,
-    location_details,
-    complaint_type,
-    priority,
-    assignedTo,
-    photo_url: {
+    if (!cloudinaryResponse) {
+      console.error(
+        "Error uploading complaint photo to cloudinary:",
+        cloudinaryResponse.error || "Unknown error",
+      );
+      return next(
+        new ErrorHandler(500, "Error uploading complaint photo to cloudinary"),
+      );
+    }
+
+    photoData = {
       publicId: cloudinaryResponse.public_id,
       url: cloudinaryResponse.secure_url,
+    };
+  }
+
+  //creating the logic for generating the unique complaint ID,type,Priority and the
+  //assignment to a supervisor also will be done here
+  const complaint_id = generateComplaintId();
+
+  const complaint = await Complaint.create({
+    person_details: {
+      name,
+      email,
+      phone,
+      street_address: person_address,
     },
-    created_by: req.user._id,
+    location: existingArea._id,
+    locality,
+    photoUrl: photoData,
+    status: "OPEN",
+    description,
+    complaint_id,
+    type_of_complaint: "general",
   });
+  // await complaint.save({ validateBeforeSave: false });
+  // complaint.save();
 
-  
+  const msg = generateComplainAcceptanceEmailTemplate(complaint.complaint_id);
 
-  req.user.myComplaints.push(complaint._id);
-  await req.user.save();
-
-  await ComplaintHistory.create({
-    complaint_id: complaint._id,
-    updated_by_id: req.user._id,
-    action_taken: `Complaint Filed on ${new Date().toLocaleString()}`,
-    comment: `Complaint titled "${title}" filed by ${req.user.name}`,
-  });
+  try {
+    await sendEmail({
+      email: complaint.person_details.email,
+      subject: "Acceptance of your complaint - Wonder Works",
+      msg,
+    });
+  } catch (error) {
+    return next(new ErrorHandler(500, error.message));
+  }
 
   res.status(201).json({
     success: true,
@@ -96,43 +127,330 @@ export const createComplaint = catchAsyncError(async (req, res, next) => {
   });
 });
 
-export const getAllComplaints = catchAsyncError(async (req, res, next) => {
-  const complaints = await Complaint.find().populate("userId", "name email");
-  res.status(200).json({
-    success: true,
-    complaints,
-  });
-});
-
-export const getComplaintById = catchAsyncError(async (req, res, next) => {
-  const { id } = req.params;
-  const complaint = await Complaint.findById(id)
-    // .populate("userId", "name email")
-    .populate("assignedTo", "name email")
-    .populate("updated_by_id", "name email");
-  if (!complaint) {
-    return next(new ErrorHandler(404, "Complaint not found"));
+export const getNewComplaints = catchAsyncError(async (req, res, next) => {
+  const user = req.user;
+  if (!user) {
+    return ErrorHandler(400, "Supervisor not found");
   }
-  const history = await ComplaintHistory.find({ complaint_id: id })
-    .populate("updated_by_id", "name email")
-    .sort({ createdAt: -1 });   
-  res.status(200).json({
+  const complaints = await Complaint.find({
+    assinedTo: user._id,
+    status: { $in: ["IN", "PROGRESS", "RESOLVED"] },
+  }).sort({ priority: -1 });
+  return res.status(200).json({
     success: true,
-    complaint,
-    history,
+    message: complaints.length
+      ? "Complaints fetched successfully"
+      : "No complaints assigned currently",
+    complaints, // empty array if none
+    count: complaints.length,
   });
 });
 
-// Updating a complaint's status (updateComplaintStatus)
+export const assignmentofComplaintbySuperVisor = catchAsyncError(
+  async (req, res, next) => {
+    const { id } = req.params;
+    const user = req.user;
 
-// export const assignComplaint = catchAsyncError(async (req, res, next) => {
-//   const { id } = req.params;
+    if (!user) {
+      return next(new ErrorHandler(400, "Supervisor not found"));
+    }
+    const complaint = await Complaint.findOne({ complaint_id: id });
+    if (!complaint) {
+      return next(new ErrorHandler(404, "Complaint not found"));
+    }
+    complaint.status = "PROGRESS";
+    await complaint.save();
+    await sendEmail({
+      email: complaint.person_details.email,
+      subject: `Complaint status update for complaint_id: ${complaint.complaint_id}`,
+      msg: `Your complaint is now being addressed by one our team worker. We appreciate your patience and will keep you updated on the progress.`,
+    });
+    return res.status(200).json({
+      success: true,
+      message: "Complaint assigned successfully",
+      complaint,
+    });
+  },
+);
 
-//   const complaint = await Complaint.findById(id); 
+export const complainResolvedBySuperVisor = catchAsyncError(
+  async (req, res, next) => {
+    const { id } = req.params;
+    const user = req.user;
 
-//   if(!complaint){
-//     return next(new ErrorHandler(404, "Complaint not found"));
-//   }
+    if (!user) {
+      return next(new ErrorHandler(400, "Supervisor not found"));
+    }
+    const complaint = await Complaint.findOne({ complaint_id: id });
+    if (!complaint) {
+      return next(new ErrorHandler(404, "Complaint not found"));
+    }
+    complaint.status = "RESOLVED";
+    await complaint.save();
+    await sendEmail({
+      email: complaint.person_details.email,
+      subject: `Complaint status update for complaint_id: ${complaint.complaint_id}`,
+      msg: `We are pleased to inform you that your complaint has been resolved. Thank you for bringing this to our attention and helping us improve our community services.`,
+    });
+    return res.status(200).json({
+      success: true,
+      message: "Complaint Resolved successfully",
+      complaint,
+    });
+  },
+);
 
+export const getEscalatedComplaints = catchAsyncError(
+  async (req, res, next) => {
+    const user = req.user;
+    if (!user) {
+      return ErrorHandler(400, "Mayor not found");
+    }
 
-// });
+    const complaints = await Complaint.find({ status: "ESCALATED" }).sort({
+      priority: -1,
+    });
+    return res.status(200).json({
+      success: true,
+      message: complaints.length
+        ? "Escalated Complaints fetched successfully"
+        : "No escalated complaints currently",
+      complaints, // empty array if none
+      count: complaints.length,
+    });
+  },
+);
+
+export const escalatedComplainResolvedByMayor = catchAsyncError(
+  async (req, res, next) => {
+    const { id } = req.params;
+    const user = req.user;
+
+    if (!user) {
+      return next(new ErrorHandler(400, "Mayor not found"));
+    }
+    const complaint = await Complaint.findOne({ complaint_id: id });
+    if (!complaint) {
+      return next(new ErrorHandler(404, "Complaint not found"));
+    }
+    complaint.status = "RESOLVED";
+    await complaint.save();
+    await sendEmail({
+      email: complaint.person_details.email,
+      subject: `Complaint status update for complaint_id: ${complaint.complaint_id}`,
+      msg: `We are pleased to inform you that your complaint has been resolved by the mayor. Thank you for bringing this to our attention and helping us improve our community services.`,
+    });
+    return res.status(200).json({
+      success: true,
+      message: "Complaint Resolved successfully by mayor",
+      complaint,
+    });
+  },
+);
+
+export const getComplaintByAreaandLocality = catchAsyncError(
+  async (req, res, next) => {
+    const { zipCode, locality } = req.body;
+
+    if (!zipCode || !locality) {
+      return next(new ErrorHandler(400, "Please Provide Area and locality"));
+    }
+
+    const area = await Area.findOne({ zipCode });
+
+    if (!area) {
+      return next(new ErrorHandler(400, "No area with this ZipCode"));
+    }
+    let complaints;
+    if (locality === "all") {
+      complaints = await Complaint.find({
+        location: area._id,
+        status: { $ne: "RESOLVED" },
+      });
+    } else {
+      complaints = await Complaint.find({
+        location: area._id,
+        locality: locality,
+        status: { $ne: "RESOLVED" },
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: "Complaints are fetched successfully",
+      complaints,
+    });
+  },
+);
+
+export const allAreawiseComplaints = catchAsyncError(async (req, res, next) => {
+  const complaintsCount = await Complaint.aggregate([
+    {
+      $match: {
+        status: { $ne: "RESOLVED" }, // ✅ correct enum
+      },
+    },
+    {
+      $group: {
+        _id: "$location", // group by Area ObjectId
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $lookup: {
+        from: "areas", // collection name (lowercase plural)
+        localField: "_id",
+        foreignField: "_id",
+        as: "area",
+      },
+    },
+    {
+      $unwind: "$area",
+    },
+    {
+      $project: {
+        _id: 0,
+        areaId: "$area._id",
+        areaName: "$area.name",
+        zipCode: "$area.zipCode",
+        count: 1,
+      },
+    },
+    {
+      $sort: { count: -1 }, // 🔥 most problematic areas first
+    },
+  ]);
+
+  return res.status(200).json({
+    success: true,
+    message: "Area-wise complaint count fetched successfully",
+    complaintsCount,
+  });
+});
+
+export const allCategoryWiseComplaints = catchAsyncError(
+  async (req, res, next) => {
+    const complaintsCount = await Complaint.aggregate([
+      {
+        $match: {
+          status: { $ne: "RESOLVED" }, // ✅ correct filter
+        },
+      },
+      {
+        $group: {
+          _id: "$type_of_complaint", // ✅ correct field
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          category: "$_id",
+          count: 1,
+        },
+      },
+      {
+        $sort: { count: -1 },
+      },
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      message: "Category-wise complaint count fetched successfully",
+      complaintsCount,
+    });
+  },
+);
+
+export const categoryWiseComplaintsByArea = catchAsyncError(
+  async (req, res, next) => {
+    const { areaId } = req.params;
+
+    const complaintsCount = await Complaint.aggregate([
+      {
+        $match: {
+          location: new mongoose.Types.ObjectId(areaId), // ✅ filter by area
+          status: { $ne: "RESOLVED" }, // ✅ exclude resolved
+        },
+      },
+      {
+        $group: {
+          _id: "$type_of_complaint", // ✅ group by category
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          category: "$_id",
+          count: 1,
+        },
+      },
+      {
+        $sort: { count: -1 },
+      },
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      message: "Category-wise complaints for area fetched successfully",
+      complaintsCount,
+    });
+  },
+);
+
+export const getComplaintStatusById = catchAsyncError(
+  async (req, res, next) => {
+    const { id } = req.params;
+
+    if (!id) {
+      return next(new ErrorHandler(400, "Please provide a tracking ID"));
+    }
+
+    const complaint = await Complaint.findOne({ complaint_id: id })
+      .populate("assinedTo", "name email")
+      .populate("location", "name zipCode");
+
+    if (!complaint) {
+      return next(new ErrorHandler(404, "Complaint not found"));
+    }
+
+    return res.status(200).json({
+      success: true,
+      complaint: {
+        complaint_id: complaint.complaint_id,
+        status: complaint.status,
+        description: complaint.description,
+        locality: complaint.locality,
+        type_of_complaint: complaint.type_of_complaint,
+        createdAt: complaint.createdAt,
+        priority: complaint.priority,
+        area: complaint.location
+          ? {
+              name: complaint.location.name,
+              zipCode: complaint.location.zipCode,
+            }
+          : null,
+        assignedSupervisor: complaint.assinedTo
+          ? {
+              name: complaint.assinedTo.name,
+              email: complaint.assinedTo.email,
+            }
+          : null,
+      },
+    });
+  },
+);
+
+export const getComplaintStats = catchAsyncError(async (req, res, next) => {
+  const [total, resolved, inProgress, escalated] = await Promise.all([
+    Complaint.countDocuments({}),
+    Complaint.countDocuments({ status: "RESOLVED" }),
+    Complaint.countDocuments({ status: { $in: ["OPEN", "IN", "PROGRESS"] } }),
+    Complaint.countDocuments({ status: "ESCALATED" }),
+  ]);
+
+  return res.status(200).json({
+    success: true,
+    stats: { total, resolved, inProgress, escalated },
+  });
+});

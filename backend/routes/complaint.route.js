@@ -2,18 +2,73 @@ import express from "express";
 import { isAuthenticated, isAuthorized } from "../middlewares/auth.js";
 import {
   createComplaint,
-  getAllComplaints,
-  getComplaintById,
-  assignComplaint,
+  getNewComplaints,
+  getEscalatedComplaints,
+  assignmentofComplaintbySuperVisor,
+  complainResolvedBySuperVisor,
+  escalatedComplainResolvedByMayor,
+  getComplaintByAreaandLocality,
+  allAreawiseComplaints,
+  allCategoryWiseComplaints,
+  categoryWiseComplaintsByArea,
+  getComplaintStatusById,
+  getComplaintStats,
 } from "../controllers/complaint.controller.js";
 
 
 
 const router = express.Router();
 
-router.post("/fileComplaint", isAuthenticated, createComplaint);
-router.get("/getAllComplaints", isAuthenticated, getAllComplaints);
-router.get("/getComplaintById/:id", isAuthenticated, getComplaintById);
-router.put("/assignComplaint/:id", isAuthenticated, isAuthorized("mayor"), assignComplaint);
+router.post("/fileComplaint", createComplaint);
+router.get("/getNewComplaints", isAuthenticated, getNewComplaints);
+router.get("/track/:id", getComplaintStatusById);
+router.put(
+  "/assignComplaint/:id",
+  isAuthenticated,
+  assignmentofComplaintbySuperVisor
+);
+router.put(
+  "/complainResolvedBySuperVisor/:id",
+  isAuthenticated,
+  complainResolvedBySuperVisor
+);
+router.get("/stats", isAuthenticated, isAuthorized("mayor"), getComplaintStats);
+router.put(
+  "/escalatedComplainResolvedByMayor/:id",
+  isAuthenticated,
+  isAuthorized("mayor"),
+  escalatedComplainResolvedByMayor
+);
+
+router.get(
+  "/getComplaintByAreaandLocality",
+  isAuthenticated,
+  isAuthorized("mayor"),
+  getComplaintByAreaandLocality
+);
+router.get(
+  "/allAreawiseComplaints",
+  isAuthenticated,
+  isAuthorized("mayor"),
+  allAreawiseComplaints,
+);
+router.get(
+  "/allCategoryWiseComplaints",
+  isAuthenticated,
+  isAuthorized("mayor"),
+  allCategoryWiseComplaints,
+);
+router.get(
+  "/categoryWiseComplaintsByArea/:areaId",
+  isAuthenticated,
+  isAuthorized("mayor"),
+  categoryWiseComplaintsByArea,
+);
+router.get(
+  "/getEscalatedComplaints",
+  isAuthenticated,
+  isAuthorized("mayor"),
+  getEscalatedComplaints
+);
 
 export default router;

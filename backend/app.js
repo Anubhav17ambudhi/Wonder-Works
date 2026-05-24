@@ -8,29 +8,42 @@ import { dbConnection } from "./db.js";
 import userRouter from "./routes/user.route.js";
 import expressFileUpload from "express-fileupload";
 import Complaint from "./routes/complaint.route.js";
+import { startDispatcher } from "./workers/aiDispatcher.js";
+import mayorRegRouter from "./routes/mayor.reg.route.js";
+import areaRouter from "./routes/area.route.js";
+import adminRouter from "./routes/admin.route.js"
+import { escalateComplaints } from "./workers/complainEscalation.js";
 
 config({ path: "./.env" });
 
 app.use(
   cors({
-    origin: [process.env.FRONTEND_URL],
+    origin: [process.env.FRONTEND_URL, "http://localhost:5173"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
-  })
+  }),
 );
 
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(expressFileUpload({
-  useTempFiles: true,
-  tempFileDir: "/tmp/"
-}));
+app.use(
+  expressFileUpload({
+    useTempFiles: true,
+    tempFileDir: "/tmp/",
+  })
+);
 
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/complaint", Complaint);
+app.use("/api/v1/mayor", mayorRegRouter);
+app.use("/api/v1/area", areaRouter);
+app.use("/api/v1/admin", adminRouter);
 
 dbConnection();
+
+startDispatcher();
+escalateComplaints();
 
 app.use(errorMiddleware);

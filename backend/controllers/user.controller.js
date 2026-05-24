@@ -6,63 +6,21 @@ import { sendEmail } from "../utils/sendEmail.js";
 import { sendToken } from "../utils/sendToken.js";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
-// errorHandler
-export const register = catchAsyncError(async (req, res, next) => {
-  const { name, email, password, role, address, phone } = req.body;
-
-  if (!name || !email || !password || !role || !phone) {
-    return next(
-      new ErrorHandler(401, "Please Provide all the fields in the form")
-    );
-  }
-
-  const isEmail = await User.findOne({ email });
-
-  if (isEmail) {
-    return next(
-      new ErrorHandler(401, "This user is already registered on the portal")
-    );
-  }
-
-  if (password.length < 8 || password.length > 16) {
-    return next(
-      new ErrorHandler(
-        400,
-        "Password must be at least 8 characters long and less than 16 characters"
-      )
-    );
-  }
-
-  const user = await User.create({
-    name,
-    email,
-    password,
-    role,
-    address,
-    phone: phone,
-  });
-  sendToken(user, 201, res, "User Registered");
-});
 
 export const login = catchAsyncError(async (req, res, next) => {
-  const { email, password, role } = req.body;
-  if (!email || !password || !role) {
+  const { email, password } = req.body;
+  if (!email || !password) {
     return next(
-      new ErrorHandler(400, "Please provide email ,password and role.")
+      new ErrorHandler(400, "Please provide email and password.")
     );
   }
   const user = await User.findOne({ email }).select("+password");
   if (!user) {
-    return next(new ErrorHandler(400, "Invalid Email Or Password.1"));
+    return next(new ErrorHandler(400, "Invalid Email Or Password"));
   }
   const isPasswordMatched = await user.comparePasswords(password);
   if (!isPasswordMatched) {
-    return next(new ErrorHandler(400, "Invalid Email Or Password.2"));
-  }
-  if (user.role !== role) {
-    return next(
-      new ErrorHandler(`User with provided email and ${role} not found!`, 404)
-    );
+    return next(new ErrorHandler(400, "Invalid Email Or Password"));
   }
   // console.log("user logged in");
 
@@ -110,14 +68,15 @@ export const forgotPassword = catchAsyncError(async (req, res, next) => {
   await user.save({ validateModifiedOnly: false });
 
   const resetPasswordUrl = `${process.env.FRONTEND_URL}/password/reset/${resetToken}`;
-
+  console.log("yaha tk bhi chal rha hai");
+  
   const message = generateForgotPasswordEmailTemplate(resetPasswordUrl);
 
   try {
     await sendEmail({
       email: user.email,
-      subject: "Schedulify - password forget",
-      message,
+      subject: "Wonder Works Password Recovery",
+      msg: message,
     });
     res.status(200).json({
       success: true,
@@ -153,8 +112,8 @@ export const resetPassword = catchAsyncError(async (req, res, next) => {
   if (req.body.password.length < 8 || req.body.password.length > 16) {
     return next(
       new ErrorHandler(
-        "Password must be at least 8 characters long and less than 16 characters",
-        400
+        400,
+        "Password must be at least 8 characters long and less than 16 characters"
       )
     );
   }
@@ -174,7 +133,7 @@ export const updatePassword = catchAsyncError(async (req, res, next) => {
     return next(new ErrorHandler(400, "Please provide all fields"));
   }
 
-  const isPasswordMatched = user.comparePasswords(currentPassword);
+  const isPasswordMatched = await user.comparePasswords(currentPassword);
 
   if (!isPasswordMatched) {
     return next(new ErrorHandler(400, "Current password is incorrect"));
