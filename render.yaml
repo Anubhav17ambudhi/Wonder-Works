@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: wonder-works-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 3500
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRE
+        value: 3d
+      - key: COOKIE_EXPIRE
+        value: 3
+      - key: FRONTEND_URL
+        sync: false
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_SERVICE
+        value: gmail
+      - key: SMTP_PORT
+        value: 465
+      - key: SMTP_MAIL
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: CLOUDINARY_CLIENT_NAME
+        sync: false
+      - key: CLOUDINARY_CLIENT_API
+        sync: false
+      - key: CLOUDINARY_CLIENT_SECRET
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: MAYOR_REGISTRATION_KEY
+        sync: false
