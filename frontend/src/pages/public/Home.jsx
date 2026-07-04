@@ -12,14 +12,17 @@ export default function Home() {
   const [stats, setStats] = useState({ total: 0, resolved: 0, inProgress: 0 });
   const { isAuthenticated, user } = useAuth();
 
-  if (isAuthenticated && user?.role) {
-    return <Navigate to={`/${user.role.toLowerCase()}`} replace />;
-  }
-
   useEffect(() => {
     // Public stats placeholder — can be wired to a public endpoint later
     setStats({ total: 1250, resolved: 890, inProgress: 240 });
   }, []);
+
+  if (isAuthenticated && user?.role) {
+    const role = user.role.toLowerCase();
+    if (role === 'mayor' || role === 'supervisor') {
+      return <Navigate to={`/${role}`} replace />;
+    }
+  }
 
   return (
     <div className="flex flex-col">
