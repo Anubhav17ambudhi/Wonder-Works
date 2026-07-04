@@ -1,44 +1,37 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import ErrorHandler from "../middlewares/error.js";
-import { log } from "console";
+
+// Initialize Resend with API key from environment variables
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const sendEmail = async ({ email, subject, msg }) => {
   if (!email || typeof email !== "string" || !email.includes("@")) {
     console.log("email.typeof:", typeof email);
-    
-    throw new ErrorHandler(400,"Invalid or missing recipient email address.");
+    throw new ErrorHandler(400, "Invalid or missing recipient email address.");
   }
 
   try {
-    console.log("📧 Preparing to send email to:", email);
-    // console.log("MAIL:", process.env.SMTP_MAIL);
-    // console.log("PASS:", process.env.SMTP_PASSWORD);
-    const transporter = nodemailer.createTransport({
-      // host: process.env.SMTP_HOST,
-      // port: Number(process.env.SMTP_PORT) || 587,
-      service: process.env.SMTP_SERVICE,
-      auth: { 
-        user: process.env.SMTP_MAIL,
-        pass: process.env.SMTP_PASSWORD,
-      },
-    });
-    console.log("yaha tk chal rha hai");
+    console.log("📧 Preparing to send email via Resend to:", email);
     
-
-    const mailOptions = {
-      from: `"Wonder Works mail system" <${process.env.SMTP_MAIL}>`,
-      to: email,
+    // Resend uses 'onboarding@resend.dev' by default for testing. 
+    // In production, configure RESEND_FROM_EMAIL with your verified domain.
+    const fromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@thefearlesscoder.site";
+    
+    const { data, error } = await resend.emails.send({
+      from: `"Wonder Works" <${fromEmail}>`,
+      to: [email],
       subject: subject,
       html: msg,
-    }; 
-    console.log("Working till mailOptions");
-    
-    await transporter.verify();
-    console.log("SMTP verified");
-    const info = await transporter.sendMail(mailOptions);
-    console.log("✅ Email sent successfully:", info.response);
+    });
+
+    if (error) {
+      console.error("❌ Resend API Error:", error);
+      throw new ErrorHandler(400, "Email sending failed");
+    }
+
+    console.log("✅ Email sent successfully:", data);
   } catch (error) {
     console.error("❌ Failed to send email:", error.message);
-    throw new ErrorHandler(400,"Email sending failed");
+    throw new ErrorHandler(400, "Email sending failed");
   }
 };
